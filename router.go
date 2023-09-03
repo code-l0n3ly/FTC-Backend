@@ -1,4 +1,4 @@
-package FTC_App
+package main
 
 import (
 	"net/http"
@@ -10,7 +10,7 @@ func initializeRouter() *mux.Router {
 	router := mux.NewRouter()
 
 	// Register API endpoints
-	router.HandleFunc("/users", getUsers).Methods(http.MethodGet)
+	router.HandleFunc("/users", GetUsers).Methods(http.MethodGet)
 	router.HandleFunc("/users/{id}", getUser).Methods(http.MethodGet)
 	router.HandleFunc("/users", createUser).Methods(http.MethodPost)
 	router.HandleFunc("/users/{id}", updateUser).Methods(http.MethodPut)

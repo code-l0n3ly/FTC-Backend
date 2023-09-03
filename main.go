@@ -1,4 +1,4 @@
-package FTC_App
+package main
 
 import (
 	"log"

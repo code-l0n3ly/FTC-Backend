@@ -1,4 +1,4 @@
-package FTC_App
+package main
 
 import (
 	"gorm.io/driver/mysql"
