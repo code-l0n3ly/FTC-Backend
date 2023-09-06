@@ -4,7 +4,6 @@ go 1.19
 
 require (
 	cloud.google.com/go/firestore v1.12.0
-	github.com/gorilla/mux v1.8.0
 	google.golang.org/api v0.126.0
 )
 
@@ -19,6 +18,7 @@ require (
 	github.com/google/s2a-go v0.1.4 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect
 	github.com/googleapis/gax-go/v2 v2.11.0 // indirect
+	github.com/gorilla/mux v1.8.0
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/crypto v0.9.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
