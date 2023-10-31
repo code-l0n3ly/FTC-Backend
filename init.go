@@ -18,6 +18,8 @@ type RestAPI struct {
 type Firebase struct {
 	ctx    context.Context
 	client *firestore.Client
+	Users  *firestore.CollectionRef
+	Events *firestore.CollectionRef
 }
 
 func New() *RestAPI {
