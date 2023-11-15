@@ -1,5 +1,10 @@
 package main
 
+import (
+	"errors"
+	"strconv"
+)
+
 type User struct {
 	StudentID  int    `json:"studentID"`
 	ProfilePic string `json:"profilePic"`
@@ -25,4 +30,30 @@ type Event struct {
 	EndTime      string `json:"endTime"`
 	OrganizerUID string `json:"organizerUID"`
 	WhatsappLink string `json:"whatsappLink"`
+}
+
+func (u *User) Validate() error {
+	studentIDStr := strconv.Itoa(u.StudentID)
+	if len(studentIDStr) == 0 {
+		return errors.New("StudentID is required")
+	}
+	if u.Email == "" {
+		return errors.New("Email is required")
+	}
+	if u.Password == "" {
+		return errors.New("Password is required")
+	}
+	if u.FirstName == "" {
+		return errors.New("FirstName is required")
+	}
+	if u.LastName == "" {
+		return errors.New("LastName is required")
+	}
+	if u.Role == "" {
+		return errors.New("Role is required")
+	}
+	if u.UID == "" {
+		return errors.New("UID is required")
+	}
+	return nil
 }

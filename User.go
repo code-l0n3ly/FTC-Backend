@@ -1,6 +1,8 @@
 package main
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 func (RestAPI *RestAPI) GetUsersCollections() {
 	RestAPI.Firebase.Users = RestAPI.Firebase.client.Collection("Users")
