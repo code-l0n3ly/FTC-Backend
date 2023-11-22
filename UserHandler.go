@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -10,20 +11,15 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type Response struct {
-	StatusCode int         `json:"status_code"`
-	Message    string      `json:"message"`
-	Data       interface{} `json:"data,omitempty"`
-}
-
 func (RestAPI *RestAPI) getUserByID(uid string) (User, error) {
 	RestAPI.GetUsersCollections()
 	users := RestAPI.UsersCollectionsJson()
-	intID, err := strconv.Atoi(uid)
-	if err != nil {
-		return User{}, err
+	intID, _ := strconv.Atoi(uid)
+	if intID >= len(users) {
+		return User{}, fmt.Errorf("User not found")
 	}
-	return users[intID], nil
+	U := users[intID]
+	return U, nil
 }
 
 func sendErrorResponse(w http.ResponseWriter, statusCode int, message string) {
@@ -40,18 +36,11 @@ func (RestAPI *RestAPI) GetUsers(w http.ResponseWriter, r *http.Request) {
 	users := RestAPI.UsersCollectionsJson()
 	w.Header().Set("Content-Type", "application/json")
 
-	// Convert the users object to json
-	u, err := json.Marshal(users)
-	if err != nil {
-		sendErrorResponse(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(&Response{
 		StatusCode: http.StatusOK,
 		Message:    "Users fetched successfully",
-		Data:       u,
+		Data:       json.NewEncoder(w).Encode(users),
 	})
 }
 
@@ -84,14 +73,9 @@ func (RestAPI *RestAPI) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate the newUser
-	err = newUser.Validate()
-	if err != nil {
-		sendErrorResponse(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
 	// Logic to save newUser in the database
+
+	_, err = RestAPI.Firebase.client.Collection("Users").Doc(newUser.UID).Create(RestAPI.Firebase.ctx, newUser)
 	// ...
 
 	w.WriteHeader(http.StatusCreated)
@@ -104,81 +88,75 @@ func (RestAPI *RestAPI) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (RestAPI *RestAPI) updateUser(w http.ResponseWriter, r *http.Request) {
-	// The incoming json should look like this
-	// {
-	// 	"studentID": 123456,
-	// 	"profilePic": "http://example.com/path/to/profile/pic.jpg",
-	// 	"bio": "This is a short bio",
-	// 	"email": "newEmail@example.com",
-	// 	"password": "newPassword",
-	// 	"firstName": "John",
-	// 	"lastName": "Doe",
-	// 	"phone": 1234567890,
-	// 	"role": "student",
-	// 	"points": 100,
-	// 	"github": "https://github.com/username",
-	// 	"uid": "uniqueUserID"
-	// }
-	var updatedUser User
-	err := json.NewDecoder(r.Body).Decode(&updatedUser)
+	var NewInfo User
+	err := json.NewDecoder(r.Body).Decode(&NewInfo)
 	if err != nil {
 		sendErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
+	if NewInfo.UID == "" {
+		sendErrorResponse(w, http.StatusBadRequest, "UID is required")
+		return
+	}
+
 	params := mux.Vars(r)
-	uid := params["uid"]
+	uid := params["id"]
 
 	existingUser, err := RestAPI.getUserByID(uid)
 	if err != nil {
-		sendErrorResponse(w, http.StatusInternalServerError, err.Error())
+		sendErrorResponse(w, http.StatusNotFound, err.Error())
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	//convert the users object to json and write it to the response
 
+	UserToBeUpdated, err := RestAPI.getUserByID(NewInfo.UID)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(&Response{
-			StatusCode: http.StatusNotFound,
-			Message:    "User not found",
-		})
+		sendErrorResponse(w, http.StatusNotFound, err.Error())
 		return
 	}
 
 	if existingUser.Role != "Administrator" {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusForbidden)
-		json.NewEncoder(w).Encode(&Response{
-			StatusCode: http.StatusForbidden,
-			Message:    "Permission denied",
-		})
+		sendErrorResponse(w, http.StatusForbidden, "Permission denied")
 		return
 	}
 
-	// Logic to update the existing user with the updatedUser data
-	userValue := reflect.ValueOf(updatedUser)
-	userType := reflect.TypeOf(updatedUser)
+	userValue := reflect.ValueOf(NewInfo)
+	userType := reflect.TypeOf(NewInfo)
 
 	var updates []firestore.Update
 	for i := 0; i < userValue.NumField(); i++ {
-		updates = append(updates, firestore.Update{
-			Path:  userType.Field(i).Name,
-			Value: userValue.Field(i).Interface(),
-		})
+		// Get the field value and the field type.
+		fieldValue := userValue.Field(i)
+		fieldType := userType.Field(i)
+
+		// Check if the field value is not the zero value for its type.
+		if !fieldValue.IsZero() {
+			// If it's not, add an update for this field.
+			updates = append(updates, firestore.Update{
+				Path:  fieldType.Name,
+				Value: fieldValue.Interface(),
+			})
+		}
 	}
 
-	_, err = RestAPI.Firebase.client.Collection("users").Doc(uid).Update(RestAPI.Firebase.ctx, updates)
-	// ...
+	_, err = RestAPI.Firebase.client.Collection("Users").Doc(UserToBeUpdated.UID).Update(RestAPI.Firebase.ctx, updates)
+	if err != nil {
+		sendErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	UserToBeUpdated, err = RestAPI.getUserByID(NewInfo.UID)
+	if err != nil {
+		sendErrorResponse(w, http.StatusNotFound, err.Error())
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(&Response{
 		StatusCode: http.StatusOK,
 		Message:    "User updated successfully",
-		Data:       existingUser,
+		Data:       UserToBeUpdated,
 	})
 }
 
@@ -227,5 +205,70 @@ func (RestAPI *RestAPI) deleteUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(&Response{
 		StatusCode: http.StatusOK,
 		Message:    "User deleted successfully",
+	})
+}
+
+func (RestAPI *RestAPI) Auth(w http.ResponseWriter, r *http.Request) {
+	var LoggedIn User
+
+	// Decode the incoming User json
+	err := json.NewDecoder(r.Body).Decode(&LoggedIn)
+	if err != nil {
+		sendErrorResponse(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	U, err := RestAPI.getUserByID(LoggedIn.UID)
+	if err != nil {
+		sendErrorResponse(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(&Response{
+		StatusCode: http.StatusOK,
+		Message:    "User logged in successfully",
+		Data:       RestAPI.generateBearerToken(LoggedIn.Username, LoggedIn.Password, U.Role),
+	})
+}
+
+func (RestAPI *RestAPI) FindUserByUsername(username string) (User, error) {
+	RestAPI.GetUsersCollections()
+	users := RestAPI.UsersCollectionsJson()
+	for _, user := range users {
+		if user.Username == username {
+			return user, nil
+		}
+	}
+	return User{}, fmt.Errorf("User not found")
+}
+
+func (RestAPI *RestAPI) Login(w http.ResponseWriter, r *http.Request) {
+	var LoggedIn User
+
+	// Decode the incoming User json
+	err := json.NewDecoder(r.Body).Decode(&LoggedIn)
+	if err != nil {
+		sendErrorResponse(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	User, err := RestAPI.FindUserByUsername(LoggedIn.Username)
+	if err != nil {
+		sendErrorResponse(w, http.StatusBadRequest, "Username Or password is incorrect")
+		return
+	}
+
+	if User.Password != LoggedIn.Password {
+		sendErrorResponse(w, http.StatusBadRequest, "Username Or password is incorrect")
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(&Response{
+		StatusCode: http.StatusOK,
+		Message:    "User logged in successfully",
+		Data:       User,
 	})
 }

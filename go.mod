@@ -7,11 +7,14 @@ require (
 	google.golang.org/api v0.126.0
 )
 
+require github.com/google/uuid v1.3.0 // indirect
+
 require (
 	cloud.google.com/go v0.110.2 // indirect
 	cloud.google.com/go/compute v1.19.3 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/longrunning v0.5.0 // indirect
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
