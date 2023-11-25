@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"log"
-	"net/http"
 
 	"cloud.google.com/go/firestore"
 	"github.com/gorilla/mux"
@@ -37,15 +36,7 @@ func New() *RestAPI {
 	}
 
 	//
-	RestAPI.Router = RestAPI.initializeRouter()
+	RestAPI.Router = Routers.
 
 	return RestAPI
-}
-
-func main() {
-	//Init RestAPI and Router with Firebase client
-	RestAPI := New()
-	go RestAPI.initLogger()
-	//Start server
-	log.Fatal(http.ListenAndServe(":8000", RestAPI.Router))
 }

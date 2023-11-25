@@ -5,12 +5,6 @@ import (
 	"strconv"
 )
 
-type Response struct {
-	StatusCode int         `json:"status_code"`
-	Message    string      `json:"message"`
-	Data       interface{} `json:"data,omitempty"`
-}
-
 type User struct {
 	StudentID  int    `json:"studentID"`
 	ProfilePic string `json:"profilePic"`
@@ -25,20 +19,6 @@ type User struct {
 	Points     int    `json:"points"`
 	Github     string `json:"github"`
 	UID        string `json:"uid"`
-}
-
-type Event struct {
-	ID           string   `json:"id"`
-	Banner       string   `json:"banner"`
-	Name         string   `json:"name"`
-	Description  string   `json:"description"`
-	Location     string   `json:"location"`
-	StartTime    string   `json:"startTime"`
-	EndTime      string   `json:"endTime"`
-	OrganizerUID string   `json:"organizerUID"`
-	MemberUID    []string `json:"MemberUID"`
-	Size         int      `json:"Size"`
-	WhatsappLink string   `json:"whatsappLink"`
 }
 
 func (u *User) Validate() error {
