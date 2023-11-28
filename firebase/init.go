@@ -15,10 +15,10 @@ type Firebase struct {
 	Events *firestore.CollectionRef
 }
 
-func New(Credntials string) *Firebase {
+func New(Credntials string, AppName string) *Firebase {
 	ctx := context.Background()
 	opt := option.WithCredentialsJSON([]byte(Credntials))
-	client, err := firestore.NewClient(ctx, "ftc-app-36fad", opt)
+	client, err := firestore.NewClient(ctx, AppName, opt)
 	if err != nil {
 		log.Fatalf("firestore new error:%s\n", err)
 	}

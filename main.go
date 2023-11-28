@@ -27,9 +27,10 @@ func init() {
 func main() {
 	AuthToken := viper.Get("AUTH_TOKEN")
 	FirebaseCredentials := viper.Get("FIREBASE_CREDENTIALS")
+	FirebaseAppName := viper.Get("FIREBASE_APP_NAME")
 	fmt.Println(AuthToken.(string))
 	//Init RestAPI and Router with Firebase client
-	FB := Firebase.New(FirebaseCredentials.(string))
+	FB := Firebase.New(FirebaseCredentials.(string), FirebaseAppName.(string))
 	RestAPI := &RestAPI{
 		Router:   mux.NewRouter(),
 		Firebase: FB,
