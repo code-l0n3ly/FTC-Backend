@@ -1,26 +1,28 @@
-package main
+package Firebase
 
 import (
 	"encoding/json"
+
+	Types "ftcksu.com/api/v2/types"
 )
 
-func (RestAPI *RestAPI) GetUsersCollections() {
-	RestAPI.Firebase.Users = RestAPI.Firebase.client.Collection("Users")
+func (Firebase *Firebase) GetUsersCollections() {
+	Firebase.Users = Firebase.Client.Collection("Users")
 }
 
-func (RestAPI *RestAPI) GetEventsCollections() {
-	RestAPI.Firebase.Events = RestAPI.Firebase.client.Collection("Events")
+func (Firebase *Firebase) GetEventsCollections() {
+	Firebase.Events = Firebase.Client.Collection("Events")
 }
 
-func (RestAPI *RestAPI) UsersCollectionsJson() (UserJson []User) {
+func (Firebase *Firebase) UsersCollectionsJson() (UserJson []Types.User) {
 	//implement a function that serlieses the users collection to json by using the type 'User' from models.go and return json object
-	col := RestAPI.Firebase.Users
-	docs, err := col.Documents(RestAPI.Firebase.ctx).GetAll()
+	col := Firebase.Users
+	docs, err := col.Documents(Firebase.Ctx).GetAll()
 	if err != nil {
 		panic(err)
 	}
 	for _, doc := range docs {
-		var user User
+		var user Types.User
 		data := doc.Data()
 		jsonBytes, err := json.Marshal(data)
 		if err != nil {
@@ -35,15 +37,15 @@ func (RestAPI *RestAPI) UsersCollectionsJson() (UserJson []User) {
 	return UserJson
 }
 
-func (RestAPI *RestAPI) EventsCollectionsJson() (EventJson []Event) {
+func (Firebase *Firebase) EventsCollectionsJson() (EventJson []Types.Event) {
 	//implement a function that serlieses the events collection to json by using the type 'Event' from models.go and return json object
-	col := RestAPI.Firebase.Events
-	docs, err := col.Documents(RestAPI.Firebase.ctx).GetAll()
+	col := Firebase.Events
+	docs, err := col.Documents(Firebase.Ctx).GetAll()
 	if err != nil {
 		panic(err)
 	}
 	for _, doc := range docs {
-		var event Event
+		var event Types.Event
 		doc.DataTo(&event)
 		EventJson = append(EventJson, event)
 	}

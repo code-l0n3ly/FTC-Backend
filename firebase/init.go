@@ -1,42 +1,30 @@
-package main
+package Firebase
 
 import (
 	"context"
 	"log"
 
 	"cloud.google.com/go/firestore"
-	"github.com/gorilla/mux"
 	"google.golang.org/api/option"
 )
 
-type RestAPI struct {
-	Router   *mux.Router
-	Firebase *Firebase
-}
-
 type Firebase struct {
-	ctx    context.Context
-	client *firestore.Client
+	Ctx    context.Context
+	Client *firestore.Client
 	Users  *firestore.CollectionRef
 	Events *firestore.CollectionRef
 }
 
-func New() *RestAPI {
+func New(Credntials string) *Firebase {
 	ctx := context.Background()
-	opt := option.WithCredentialsFile("service_account.json")
+	opt := option.WithCredentialsJSON([]byte(Credntials))
 	client, err := firestore.NewClient(ctx, "ftc-app-36fad", opt)
 	if err != nil {
 		log.Fatalf("firestore new error:%s\n", err)
 	}
-	RestAPI := &RestAPI{
-		Firebase: &Firebase{
-			ctx:    ctx,
-			client: client,
-		},
+	Firebase := &Firebase{
+		Ctx:    ctx,
+		Client: client,
 	}
-
-	//
-	RestAPI.Router = Routers.
-
-	return RestAPI
+	return Firebase
 }

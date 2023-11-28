@@ -1,4 +1,4 @@
-package main
+package Type
 
 type Event struct {
 	ID           string   `json:"id"`

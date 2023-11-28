@@ -1,4 +1,4 @@
-package main
+package Type
 
 type Response struct {
 	StatusCode int         `json:"status_code"`
